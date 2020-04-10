@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhaoya.dao.CustomerDao">
+	<resultMap type="Customer" id="cusMap">
+		<id column="id" property="id" />
+		<result column="cus_name" property="cusName" />
+		<result column="cus_idCard" property="cusIdCard" />
+		<result column="room_id" property="roomId" />
+		<result column="people_number" property="peopleNumber" />
+		<result column="cus_date" property="cusDate" />
+		<result column="leace_date" property="leaceDate" />
+		<result column="total" property="total" />
+		<association property="room" column="room_id"
+			select="selectRoomById"></association>
+	</resultMap>
+
+	<resultMap type="Room" id="roomMap">
+		<id column="id" property="id" />
+		<result column="room_number" property="roomNumber" />
+		<result column="price" property="price" />
+	</resultMap>
+
+	<select id="getCusList" resultMap="cusMap">
+		select c.*,
+		(c.leace_date-c.cus_date) *
+		r.price totalPrice
+		from
+		t_Customer c
+		LEFT JOIN t_guest_room r ON
+		c.room_id = r.id
+		<where>
+			<if test="null != name and name != ''">
+				and c.cus_name like concat('%', #{name}, '%')
+			</if>
+			<if test="null != roomNumber and roomNumber != ''">
+				and r.room_number = #{roomNumber}
+			</if>
+			<if test="null != idCard and idCard != ''">
+				and c.cus_idCard like concat('%', #{idCard}, '%')
+			</if>
+			<if test="null != cusDate and cusDate != ''">
+				and c.cus_date = #{cusDate}
+			</if>
+		</where>
+	</select>
+
+	<select id="selectRoomById" resultMap="roomMap">
+		select * from t_guest_room
+		where id = #{value}
+	</select>
+
+	<select id="getById" resultMap="cusMap">
+		select c.*, sum(c.people_number)
+		as total,
+		(c.leace_date-c.cus_date) * r.price totalPrice
+		from t_Customer
+		c
+		LEFT JOIN t_guest_room r ON c.room_id = r.id
+	</select>
+
+	<select id="validByRoomId" resultMap="cusMap">
+		select c.*,
+		sum(c.people_number) as total,
+		(c.leace_date-c.cus_date) * r.price
+		totalPrice
+		from t_Customer c
+		LEFT JOIN t_guest_room r ON c.room_id =
+		r.id
+		where r.id = #{value}
+	</select>
+
+	<insert id="add">
+		insert into t_Customer ( cus_name,
+		cus_idCard,room_id,people_number,cus_date,leace_date)
+		values
+		(#{cusName},
+		#{cusIdCard},#{roomId},#{peopleNumber},#{cusDate},#{leaceDate})
+	</insert>
+
+	<delete id="delete">
+		delete from t_Customer where id = #{value}
+	</delete>
+
+	<update id="update">
+		UPDATE t_Customer SET leace_date = #{leaceDate}
+		where
+		id = #{id}
+	</update>
+
+	<!-- <select id="getTotalPerson" resultType="Integer">
+		select sum(c.people_number) as total from t_Customer c
+		LEFT JOIN
+		t_guest_room r ON c.room_id = r.id
+		<where>
+			<if test="null != name and name != ''">
+				and c.cus_name like concat('%', #{name}, '%')
+			</if>
+			<if test="null != roomNumber and roomNumber != ''">
+				and r.room_number = #{roomNumber}
+			</if>
+			<if test="null != idCard and idCard != ''">
+				and c.cus_idCard like concat('%', #{idCard}, '%')
+			</if>
+			<if test="null != cusDate and cusDate != ''">
+				and c.cus_date = #{cusDate}
+			</if>
+		</where>
+	</select> -->
+
+	<select id="getRoomId" resultType="int">
+		select id from t_guest_room
+		where room_number = #{value}
+	</select>
+</mapper>
